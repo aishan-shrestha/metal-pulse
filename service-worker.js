@@ -1,10 +1,13 @@
 const CACHE_NAME = "metal-pulse-v1";
-const assets = ["./index.html", "https://cdn.tailwindcss.com"];
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE_NAME).then((c) => c.addAll(assets)));
+  e.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(["./", "./index.html"]);
+    }),
+  );
 });
 
 self.addEventListener("fetch", (e) => {
-  e.respondWith(caches.match(e.request).then((res) => res || fetch(e.request)));
+  e.respondWith(caches.match(e.request).then((r) => r || fetch(e.request)));
 });

@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MetalPulse | Spot Prices</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      .gold-glow {
+        box-shadow: 0 10px 30px -5px rgba(245, 158, 11, 0.4);
+      }
+      .silver-glow {
+        box-shadow: 0 10px 30px -5px rgba(59, 130, 246, 0.4);
+      }
+      .btn-transition {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+    </style>
+  </head>
+  <body
+    class="bg-[#0b1120] text-slate-200 min-h-screen flex items-center justify-center p-4 font-sans"
+    id="app-body"
+  >
+    <div
+      class="w-full max-w-md bg-slate-800/40 backdrop-blur-2xl rounded-[3rem] p-8 shadow-2xl border border-slate-700/50 relative overflow-hidden"
+    >
+      <!-- Background Glows -->
+      <div
+        id="glow-1"
+        class="absolute -top-24 -right-24 w-48 h-48 rounded-full blur-[90px] transition-all duration-1000 bg-amber-600/10"
+      ></div>
+      <div
+        id="glow-2"
+        class="absolute -bottom-24 -left-24 w-48 h-48 rounded-full blur-[90px] transition-all duration-1000 bg-indigo-600/10"
+      ></div>
+
+      <header class="flex justify-between items-start mb-6 relative z-10">
+        <div class="space-y-1">
+          <h1 class="text-3xl font-black tracking-tighter text-white">
+            Metal<span
+              id="brand-suffix"
+              class="text-amber-500 transition-colors"
+              >Pulse</span
+            >
+          </h1>
+
+          <!-- Nepal Default Dropdown -->
+          <div class="relative inline-block">
+            <select
+              id="currency-select"
+              onchange="changeCurrency()"
+              class="appearance-none bg-slate-900/80 border border-slate-700 text-slate-300 text-[11px] font-bold py-2 pl-3 pr-8 rounded-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all uppercase tracking-wider"
+            >
+              <option value="npr" selected>🇳🇵 Nepal (NPR)</option>
+              <option value="inr">🇮🇳 India (INR)</option>
+              <option value="usd">🇺🇸 USA (USD)</option>
+              <option value="aed">🇦🇪 UAE (AED)</option>
+              <option value="aud">🇦🇺 Australia (AUD)</option>
+            </select>
+            <div
+              class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500"
+            >
+              <svg
+                class="h-3 w-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="4"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col items-end gap-1.5">
+          <div
+            id="status-badge"
+            class="flex items-center gap-2 bg-slate-950/60 px-3 py-1.5 rounded-full border border-slate-700/50 shadow-sm"
+          >
+            <div
+              id="status-dot"
+              class="w-1.5 h-1.5 rounded-full bg-green-500"
+            ></div>
+            <span
+              id="status-text"
+              class="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em]"
+              >Cached</span
+            >
+          </div>
+          <span
+            class="text-[8px] font-bold text-slate-600 uppercase tracking-widest mr-1"
+            >Spot Market</span
+          >
+        </div>
+      </header>
+
+      <!-- Metal Tabs -->
+      <div
+        class="relative z-10 flex bg-slate-950/40 p-1.5 rounded-[1.5rem] mb-8 border border-slate-700/30"
+      >
+        <button
+          onclick="setMetal('xau')"
+          id="tab-xau"
+          class="flex-1 py-3 rounded-[1.1rem] text-[10px] font-black tracking-widest transition-all duration-500 uppercase"
+        >
+          Gold
+        </button>
+        <button
+          onclick="setMetal('xag')"
+          id="tab-xag"
+          class="flex-1 py-3 rounded-[1.1rem] text-[10px] font-black tracking-widest transition-all duration-500 uppercase"
+        >
+          Silver
+        </button>
+      </div>
+
+      <!-- Main Display -->
+      <main
+        class="relative z-10 text-center py-10 bg-gradient-to-b from-slate-900/60 to-transparent rounded-[2.5rem] border border-slate-700/20 mb-6 shadow-inner"
+      >
+        <p
+          class="text-slate-500 text-[10px] font-bold uppercase tracking-[0.3em] mb-4"
+        >
+          Current Spot Price (10g)
+        </p>
+        <div
+          id="price-10g"
+          class="text-6xl font-black text-white tabular-nums tracking-tighter drop-shadow-2xl"
+        >
+          ---
+        </div>
+        <p
+          id="update-date"
+          class="text-slate-500 text-[9px] mt-6 font-bold opacity-40 uppercase tracking-[0.2em]"
+        >
+          Awaiting Data...
+        </p>
+      </main>
+
+      <!-- Secondary Rates -->
+      <div class="relative z-10 grid grid-cols-2 gap-4 mb-10">
+        <div
+          class="bg-slate-900/40 p-6 rounded-[2rem] border border-slate-700/30 flex flex-col items-center"
+        >
+          <p
+            class="text-slate-500 text-[9px] font-black uppercase tracking-[0.2em] mb-2"
+          >
+            Per Tola
+          </p>
+          <div id="price-tola" class="text-lg font-bold text-white">---</div>
+        </div>
+        <div
+          class="bg-slate-900/40 p-6 rounded-[2rem] border border-slate-700/30 flex flex-col items-center"
+        >
+          <p
+            class="text-slate-500 text-[9px] font-black uppercase tracking-[0.2em] mb-2"
+          >
+            Per KG
+          </p>
+          <div id="price-kg" class="text-lg font-bold text-white">---</div>
+        </div>
+      </div>
+
+      <!-- Updated Button Terminology -->
+      <footer class="relative z-10">
+        <button
+          id="refresh-btn"
+          onclick="refreshData()"
+          class="btn-transition group relative w-full overflow-hidden rounded-[1.5rem] py-5 px-6 flex items-center justify-between active:scale-[0.97]"
+        >
+          <div
+            id="btn-bg"
+            class="absolute inset-0 transition-colors duration-500"
+          ></div>
+          <span
+            class="relative z-10 text-[11px] font-black tracking-[0.35em] text-white uppercase pl-2"
+            >Sync Spot Prices</span
+          >
+          <div
+            class="relative z-10 h-10 w-10 bg-black/20 rounded-xl flex items-center justify-center border border-white/10"
+          >
+            <svg
+              id="refresh-icon"
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5 text-white transition-transform duration-700 group-hover:rotate-180"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2.5"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
+            </svg>
+          </div>
+        </button>
+      </footer>
+    </div>
+
+    <script>
+      const TROY_OUNCE_TO_GRAM = 31.1035;
+      const TOLA_WEIGHT = 11.6638;
+      let currentMetal = "xau";
+
+      const currencySymbols = {
+        npr: "Rs",
+        inr: "₹",
+        usd: "$",
+        aed: "د.إ",
+        aud: "A$",
+      };
+      const endpoints = {
+        xau: "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/xau.json",
+        xag: "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/xag.json",
+      };
+
+      async function init() {
+        // Nepal (NPR) is forced as the default if no selection exists
+        const savedCurrency =
+          localStorage.getItem("selected_currency") || "npr";
+        document.getElementById("currency-select").value = savedCurrency;
+        setMetal(localStorage.getItem("selected_metal") || "xau");
+      }
+
+      function setMetal(metal) {
+        currentMetal = metal;
+        localStorage.setItem("selected_metal", metal);
+        const isGold = metal === "xau";
+
+        document.getElementById("brand-suffix").className = isGold
+          ? "text-amber-500"
+          : "text-blue-500";
+        document.getElementById("btn-bg").className =
+          `absolute inset-0 transition-colors duration-500 ${isGold ? "bg-amber-600" : "bg-blue-600"}`;
+        document.getElementById("refresh-btn").className =
+          `btn-transition group relative w-full overflow-hidden rounded-[1.5rem] py-4 px-6 flex items-center justify-between active:scale-[0.97] ${isGold ? "gold-glow" : "silver-glow"}`;
+
+        document.getElementById("tab-xau").className = isGold
+          ? "flex-1 py-3 rounded-[1.1rem] text-[10px] font-black tracking-widest bg-amber-600 text-white shadow-xl"
+          : "flex-1 py-3 rounded-[1.1rem] text-[10px] font-black tracking-widest text-slate-500 hover:text-white";
+        document.getElementById("tab-xag").className = !isGold
+          ? "flex-1 py-3 rounded-[1.1rem] text-[10px] font-black tracking-widest bg-blue-600 text-white shadow-xl"
+          : "flex-1 py-3 rounded-[1.1rem] text-[10px] font-black tracking-widest text-slate-500 hover:text-white";
+
+        fetchData();
+      }
+
+      async function fetchData(force = false) {
+        const today = new Date().toDateString();
+        const cacheKey = `metal_cache_${currentMetal}`;
+        const cached = localStorage.getItem(cacheKey);
+
+        if (!force && cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed.cacheDate === today) {
+            render(parsed.rates, "Cached");
+            return;
+          }
+        }
+
+        updateLoading(true);
+        try {
+          const res = await fetch(endpoints[currentMetal]);
+          const data = await res.json();
+          localStorage.setItem(
+            cacheKey,
+            JSON.stringify({ rates: data[currentMetal], cacheDate: today }),
+          );
+          render(data[currentMetal], "Live");
+        } catch (e) {
+          document.getElementById("update-date").innerText = "Update Failed";
+        } finally {
+          updateLoading(false);
+        }
+      }
+
+      function render(rates, type) {
+        const currency = document.getElementById("currency-select").value;
+        const pricePerOz = rates[currency];
+        const symbol = currencySymbols[currency];
+        const pricePerGram = pricePerOz / TROY_OUNCE_TO_GRAM;
+
+        const r10g = Math.round(pricePerGram * 10);
+        const rTola = Math.round(pricePerGram * TOLA_WEIGHT);
+        const rKg = Math.round(pricePerGram * 1000);
+
+        document.getElementById("price-10g").innerText =
+          `${symbol} ${r10g.toLocaleString()}`;
+        document.getElementById("price-tola").innerText =
+          `${symbol} ${rTola.toLocaleString()}`;
+        document.getElementById("price-kg").innerText =
+          `${symbol} ${rKg.toLocaleString()}`;
+        document.getElementById("update-date").innerText =
+          `Synced at ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+
+        const dot = document.getElementById("status-dot");
+        document.getElementById("status-text").innerText = type;
+        dot.className = `w-1.5 h-1.5 rounded-full ${type === "Live" ? "bg-blue-400 animate-pulse" : "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"}`;
+      }
+
+      function changeCurrency() {
+        localStorage.setItem(
+          "selected_currency",
+          document.getElementById("currency-select").value,
+        );
+        fetchData();
+      }
+
+      function refreshData() {
+        fetchData(true);
+      }
+
+      function updateLoading(l) {
+        const b = document.getElementById("refresh-btn");
+        const i = document.getElementById("refresh-icon");
+        b.classList.toggle("opacity-70", l);
+        b.classList.toggle("pointer-events-none", l);
+        i.classList.toggle("animate-spin", l);
+      }
+
+      init();
+    </script>
+  </body>
+</html>

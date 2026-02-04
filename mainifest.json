@@ -1,7 +1,7 @@
 {
   "name": "MetalPulse",
   "short_name": "MetalPulse",
-  "start_url": "./index.html",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#1e293b",

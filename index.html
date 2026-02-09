@@ -271,36 +271,51 @@
         fetchData();
       }
 
+      function todayKey() {
+        return new Date().toISOString().slice(0, 10);
+      }
+
       async function fetchData(force = false) {
-        const today = new Date().toDateString();
-        const cacheKey = `metal_cache_${currentMetal}`;
+        const cacheKey = `metal_cache_${currentMetal}_${todayKey()}`;
         const cached = localStorage.getItem(cacheKey);
 
         if (!force && cached) {
-          const parsed = JSON.parse(cached);
-          if (parsed.cacheDate === today) {
-            render(parsed.rates, "Cached");
-            return;
-          }
+          render(JSON.parse(cached), "Cached");
+          return;
         }
 
         updateLoading(true);
+
         try {
-          const res = await fetch(endpoints[currentMetal]);
+          // cache-buster prevents CDN/browser reuse
+          const url = endpoints[currentMetal] + "?t=" + Date.now();
+
+          const res = await fetch(url, {
+            cache: "no-store"
+          });
+
           const data = await res.json();
+
+          if (!data[currentMetal]) throw new Error("Bad API payload");
+
           localStorage.setItem(
             cacheKey,
-            JSON.stringify({ rates: data[currentMetal], cacheDate: today }),
+            JSON.stringify(data[currentMetal])
           );
+
           render(data[currentMetal], "Live");
+
         } catch (e) {
+          console.error(e);
           document.getElementById("update-date").innerText = "Update Failed";
-        } finally {
-          updateLoading(false);
         }
+
+        updateLoading(false);
       }
 
+
       function render(rates, type) {
+
         const currency = document.getElementById("currency-select").value;
         const pricePerOz = rates[currency];
         const symbol = currencySymbols[currency];
@@ -348,7 +363,7 @@
 
       /* PWA */
       if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("service-worker.js");
+        navigator.serviceWorker.register("./service-worker.js").catch(()=>{});
       }
 
     </script>
